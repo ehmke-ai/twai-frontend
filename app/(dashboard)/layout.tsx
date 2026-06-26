@@ -6,6 +6,7 @@ import Link from "next/link";
 const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/backtest", label: "Backtest" },
+  { href: "/models", label: "Models" },
 ];
 
 export default function DashboardLayout({
