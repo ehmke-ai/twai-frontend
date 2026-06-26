@@ -278,3 +278,62 @@ export function activateModel(id: string): Promise<{ id: string; status: string 
     method: "PUT",
   });
 }
+
+// ---------------------------------------------------------------------------
+// Robinhood connection (PRD Section 11.2 — API-010/011/012) + status.
+// OAuth and tokens live entirely backend-side (INV-011/INV-012); the frontend
+// only triggers the redirect flow and reads non-sensitive connection state.
+// ---------------------------------------------------------------------------
+
+export type RobinhoodStatus = {
+  connected: boolean;
+  configured: boolean;
+  account_id: string | null;
+  account_number: string | null;
+  account_type: string | null;
+  scope: string | null;
+  expires_at: string | null;
+  connected_at: string | null;
+};
+
+// API-020 — Agentic account snapshot via MCP read tools. Shapes are
+// broker-defined, so kept loose and rendered defensively.
+export type Portfolio = {
+  account: Record<string, unknown> | null;
+  portfolio: Record<string, unknown> | null;
+  positions: Array<Record<string, unknown>> | null;
+};
+
+// Full-page navigation target for the OAuth redirect (API-010). Not a fetch:
+// /robinhood/connect 302-redirects to Robinhood, so the browser must navigate.
+export function robinhoodConnectUrl(): string {
+  return `${API_BASE_URL}/robinhood/connect`;
+}
+
+export function getRobinhoodStatus(): Promise<RobinhoodStatus> {
+  return apiFetch<RobinhoodStatus>("/robinhood/status");
+}
+
+// API-012
+export function disconnectRobinhood(): Promise<{ disconnected: boolean }> {
+  return apiFetch<{ disconnected: boolean }>("/robinhood/disconnect", {
+    method: "POST",
+  });
+}
+
+// API-020
+export function getPortfolio(): Promise<Portfolio> {
+  return apiFetch<Portfolio>("/portfolio");
+}
+
+// Required disclosure (PRD Section 18) — shown before the first Robinhood
+// connect and acknowledged before the connect button is enabled.
+export const ROBINHOOD_DISCLOSURE =
+  "This app uses quantitative models and an AI agent to day trade in your " +
+  "Robinhood Agentic account. Backtest results do not guarantee live " +
+  "performance. ML models can overfit and fail in live markets. The AI agent " +
+  "may misinterpret signals, overtrade, or act on stale data. Day trading " +
+  "involves significant risk, including possible loss of your entire funded " +
+  "amount. You are solely responsible for all trades. Only fund your Agentic " +
+  "account with money you can afford to lose. Robinhood does not supervise " +
+  "this agent. Complete all validation phases before enabling auto-execution.";

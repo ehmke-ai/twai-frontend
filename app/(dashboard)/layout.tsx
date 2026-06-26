@@ -7,6 +7,7 @@ const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/backtest", label: "Backtest" },
   { href: "/models", label: "Models" },
+  { href: "/settings/integrations", label: "Settings" },
 ];
 
 export default function DashboardLayout({
