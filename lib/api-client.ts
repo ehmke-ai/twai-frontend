@@ -8,6 +8,21 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+// ---------------------------------------------------------------------------
+// Auth — bearer token injection.
+// The getter is registered by <AuthTokenBridge> from the Neon Auth session, so
+// this module imports no auth SDK and holds no secrets (INV-012): it only
+// attaches a short-lived access token already present in the browser. The token
+// authenticates the caller; the backend re-verifies it and enforces the
+// email allowlist.
+// ---------------------------------------------------------------------------
+type AuthTokenGetter = () => Promise<string | null>;
+let getAuthToken: AuthTokenGetter | null = null;
+
+export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
+  getAuthToken = getter;
+}
+
 export type HealthResponse = {
   status: "ok" | "degraded";
   db: "ok" | "down";
@@ -24,10 +39,12 @@ export class ApiError extends Error {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAuthToken ? await getAuthToken() : null;
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers ?? {}),
     },
     cache: "no-store",

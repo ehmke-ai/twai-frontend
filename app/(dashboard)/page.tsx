@@ -38,13 +38,13 @@ export default function Home() {
         : "bg-zinc-400";
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-black">
+    <div className="flex items-center justify-center">
       <div className="w-full max-w-md rounded-2xl border border-black/[.08] bg-white p-8 shadow-sm dark:border-white/[.145] dark:bg-zinc-950">
         <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
           TWAI
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          AI Day Trading Agent — M0 scaffold
+          AI Day Trading Agent
         </p>
 
         <div className="mt-6 flex items-center gap-3 rounded-lg border border-black/[.06] p-4 dark:border-white/[.1]">
@@ -68,6 +68,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
