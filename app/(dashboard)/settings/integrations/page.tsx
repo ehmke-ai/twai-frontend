@@ -162,9 +162,9 @@ function ConnectCard({
 
       {!configured && (
         <p className="rounded-md border border-black/[.08] bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:border-white/[.145] dark:bg-zinc-900">
-          Backend OAuth is not configured. Set <code>ROBINHOOD_CLIENT_ID</code>{" "}
-          (and related <code>ROBINHOOD_*</code> vars) on the backend to enable
-          connecting.
+          Backend OAuth is not configured. Set <code>ROBINHOOD_REDIRECT_URI</code>{" "}
+          (pointing at the backend&apos;s <code>/robinhood/callback</code>) to
+          enable connecting. The Robinhood client is registered automatically.
         </p>
       )}
 
