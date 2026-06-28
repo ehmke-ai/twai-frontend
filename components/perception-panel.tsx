@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { getPerception, type PerceptionSignal } from "@/lib/api-client";
+import { getPerception } from "@/lib/api-client";
+import { usePolling } from "@/lib/use-polling";
 
 // Color a sentiment score (-1..+1): green bullish, red bearish, zinc neutral.
 function tone(score: number): string {
@@ -18,32 +17,8 @@ function score(n: number): string {
 // Latest PerceptionSignal per symbol (PRD FR-016 / INV-018): retail /
 // institutional / media sentiment plus the Anthropic-written key thesis.
 export function PerceptionPanel() {
-  const [signals, setSignals] = useState<PerceptionSignal[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      try {
-        const data = await getPerception();
-        if (active) {
-          setSignals(data);
-          setError(null);
-        }
-      } catch (e) {
-        if (active) setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        if (active) setLoaded(true);
-      }
-    }
-    load();
-    const id = setInterval(load, 60_000);
-    return () => {
-      active = false;
-      clearInterval(id);
-    };
-  }, []);
+  const { data, error, loaded } = usePolling(getPerception, 60_000);
+  const signals = data ?? [];
 
   return (
     <div className="rounded-xl border border-black/[.08] dark:border-white/[.145]">

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { getAgentDecisions, type AgentDecision } from "@/lib/api-client";
+import { usePolling } from "@/lib/use-polling";
 
 const ACTION_STYLES: Record<AgentDecision["action"], string> = {
   BUY: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
@@ -13,32 +12,8 @@ const ACTION_STYLES: Record<AgentDecision["action"], string> = {
 
 // Renders the recent decision-cycle log (PRD M4 — "all decisions logged").
 export function AgentFeed({ pollMs = 30000 }: { pollMs?: number }) {
-  const [rows, setRows] = useState<AgentDecision[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      try {
-        const data = await getAgentDecisions(50);
-        if (active) {
-          setRows(data);
-          setError(null);
-        }
-      } catch (e) {
-        if (active) setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        if (active) setLoaded(true);
-      }
-    }
-    load();
-    const id = setInterval(load, pollMs);
-    return () => {
-      active = false;
-      clearInterval(id);
-    };
-  }, [pollMs]);
+  const { data, error, loaded } = usePolling(() => getAgentDecisions(50), pollMs);
+  const rows = data ?? [];
 
   return (
     <div className="rounded-xl border border-black/[.08] dark:border-white/[.145]">

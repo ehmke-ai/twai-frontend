@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { getMetrics, type Metrics } from "@/lib/api-client";
+import { getMetrics } from "@/lib/api-client";
+import { usePolling } from "@/lib/use-polling";
 
 function money(n: number): string {
   const sign = n < 0 ? "-" : "";
@@ -31,24 +30,8 @@ function Stat({
 // Realized P&L summary (PRD Section 15 / API-051). Net P&L is gross minus
 // estimated slippage and Anthropic API spend (FR-013).
 export function PnlSummary() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    const load = () =>
-      getMetrics()
-        .then((m) => active && setMetrics(m))
-        .catch((e: unknown) =>
-          active && setError(e instanceof Error ? e.message : String(e)),
-        );
-    load();
-    const id = setInterval(load, 60_000); // CFG-016 — relaxed swing cadence
-    return () => {
-      active = false;
-      clearInterval(id);
-    };
-  }, []);
+  // CFG-016 — relaxed swing cadence.
+  const { data: metrics, error } = usePolling(getMetrics, 60_000);
 
   if (error) {
     return (
