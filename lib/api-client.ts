@@ -109,12 +109,13 @@ export type EquityPoint = { date: string; equity: number };
 export type BacktestTrade = {
   symbol: string;
   entry_date: string;
+  exit_date: string;
   entry_price: number;
   exit_price: number;
   shares: number;
   pnl: number;
   return_pct: number;
-  exit_reason: string;
+  exit_reason: string; // "stop" | "target" | "max_hold" | "end_of_backtest"
 };
 
 export type WalkForwardFold = {
@@ -343,14 +344,47 @@ export function getPortfolio(): Promise<Portfolio> {
   return apiFetch<Portfolio>("/portfolio");
 }
 
+// ---------------------------------------------------------------------------
+// Agent status (PRD Section 11.1 — API-001/002/003/004)
+// ---------------------------------------------------------------------------
+
+export type AgentStatus = {
+  active: boolean;
+  phase: number;
+  last_cycle_at: string | null;
+  heartbeat_at: string | null;
+  poll_interval_sec: number;
+};
+
+// API-001
+export function startAgent(): Promise<{ active: boolean }> {
+  return apiFetch<{ active: boolean }>("/agent/start", { method: "POST" });
+}
+
+// API-002
+export function stopAgent(): Promise<{ active: boolean }> {
+  return apiFetch<{ active: boolean }>("/agent/stop", { method: "POST" });
+}
+
+// API-003
+export function flattenAgent(): Promise<{ flattening: boolean }> {
+  return apiFetch<{ flattening: boolean }>("/agent/flatten", { method: "POST" });
+}
+
+// API-004
+export function getAgentStatus(): Promise<AgentStatus> {
+  return apiFetch<AgentStatus>("/agent/status");
+}
+
 // Required disclosure (PRD Section 18) — shown before the first Robinhood
 // connect and acknowledged before the connect button is enabled.
 export const ROBINHOOD_DISCLOSURE =
-  "This app uses quantitative models and an AI agent to day trade in your " +
-  "Robinhood Agentic account. Backtest results do not guarantee live " +
-  "performance. ML models can overfit and fail in live markets. The AI agent " +
-  "may misinterpret signals, overtrade, or act on stale data. Day trading " +
-  "involves significant risk, including possible loss of your entire funded " +
-  "amount. You are solely responsible for all trades. Only fund your Agentic " +
-  "account with money you can afford to lose. Robinhood does not supervise " +
-  "this agent. Complete all validation phases before enabling auto-execution.";
+  "This app uses quantitative models and an AI agent to swing trade in your " +
+  "Robinhood Agentic account. Positions may be held for days or weeks. " +
+  "Backtest results do not guarantee live performance. ML models can overfit " +
+  "and fail in live markets. The AI agent may misinterpret signals, overtrade, " +
+  "or act on stale data. Swing trading involves significant risk, including " +
+  "possible loss of your entire funded amount. You are solely responsible for " +
+  "all trades. Only fund your Agentic account with money you can afford to " +
+  "lose. Robinhood does not supervise this agent. Complete all validation " +
+  "phases before enabling auto-execution.";

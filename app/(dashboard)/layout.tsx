@@ -11,6 +11,8 @@ const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/backtest", label: "Backtest" },
   { href: "/models", label: "Models" },
+  { href: "/positions", label: "Positions" },
+  { href: "/history", label: "History" },
   { href: "/settings/integrations", label: "Settings" },
 ];
 

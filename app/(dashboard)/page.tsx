@@ -44,7 +44,7 @@ export default function Home() {
           TWAI
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          AI Day Trading Agent
+          AI Swing Trading Agent
         </p>
 
         <div className="mt-6 flex items-center gap-3 rounded-lg border border-black/[.06] p-4 dark:border-white/[.1]">

@@ -25,8 +25,8 @@ function fmt(n: number, digits = 2): string {
 
 export default function BacktestPage() {
   const [symbols, setSymbols] = useState(DEFAULT_SYMBOLS.join(", "));
-  const [startDate, setStartDate] = useState("2024-01-01");
-  const [endDate, setEndDate] = useState("2025-06-01");
+  const [startDate, setStartDate] = useState("2023-01-01");
+  const [endDate, setEndDate] = useState("2026-01-01");
   const [capital, setCapital] = useState(5000);
 
   const [running, setRunning] = useState(false);
@@ -43,7 +43,7 @@ export default function BacktestPage() {
         .map((s) => s.trim().toUpperCase())
         .filter(Boolean);
       const { id } = await runBacktest({
-        strategy: "momentum_breakout",
+        strategy: "perception_swing",
         symbols: parsedSymbols,
         start_date: startDate,
         end_date: endDate,
@@ -64,8 +64,8 @@ export default function BacktestPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Backtest</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Phase 0 — historical validation of <code>momentum_breakout</code>. No
-          live trading.
+          Phase 0 — historical validation of <code>perception_swing</code> (swing
+          trading, positions held days–weeks). No live trading.
         </p>
       </div>
 
