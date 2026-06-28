@@ -1,7 +1,9 @@
 import Link from "next/link";
 
-// Settings landing (PRD Section 12). M3 ships the Integrations sub-page;
-// guardrails configuration (guardrails-form) lands in M5.
+import { GuardrailsForm } from "@/components/guardrails-form";
+
+// Settings landing (PRD Section 12): integrations + the server-enforced
+// guardrails view (guardrails-form, M5).
 const SECTIONS = [
   {
     href: "/settings/integrations",
@@ -31,6 +33,8 @@ export default function SettingsPage() {
           </Link>
         ))}
       </div>
+
+      <GuardrailsForm />
     </div>
   );
 }

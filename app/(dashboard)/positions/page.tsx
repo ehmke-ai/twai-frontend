@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PortfolioSummary } from "@/components/portfolio-summary";
 import { getPortfolio, type Portfolio } from "@/lib/api-client";
 
 export default function PositionsPage() {
@@ -35,6 +36,8 @@ export default function PositionsPage() {
           Open positions in your Robinhood Agentic account (Phase 2+).
         </p>
       </div>
+
+      <PortfolioSummary />
 
       {loading && (
         <p className="text-sm text-zinc-500">Loading portfolio…</p>

@@ -405,6 +405,112 @@ export function getAgentDecisions(limit = 50): Promise<AgentDecision[]> {
   return apiFetch<AgentDecision[]>(`/agent/decisions?limit=${limit}`);
 }
 
+// ---------------------------------------------------------------------------
+// Execution: order ledger, P&L metrics, history, guardrail config (PRD M5).
+// Order placement stays entirely backend-side via execution → mcp.robinhood
+// (INV-001); the frontend only reads the ledger and routes user approvals.
+// ---------------------------------------------------------------------------
+
+export type OrderStatus =
+  | "pending"
+  | "approved"
+  | "placed"
+  | "filled"
+  | "rejected"
+  | "canceled";
+
+// One row of the order ledger (PRD agent_order).
+export type AgentOrder = {
+  id: string;
+  created_at: string | null;
+  symbol: string;
+  side: "buy" | "sell";
+  quantity: number;
+  notional: number;
+  price: number | null;
+  status: OrderStatus;
+  mcp_order_id: string | null;
+  stop_loss_pct: number | null;
+  take_profit_pct: number | null;
+  phase: number;
+  trigger: string | null;
+  reason: string;
+  realized_pnl: number | null;
+  raw: Record<string, unknown>;
+};
+
+// API-051 — realized P&L summary (PRD Section 15).
+export type Metrics = {
+  num_trades: number;
+  num_wins: number;
+  num_losses: number;
+  win_rate: number;
+  profit_factor: number;
+  gross_profit: number;
+  gross_loss: number;
+  gross_pnl: number;
+  slippage_cost: number;
+  api_cost: number;
+  net_pnl: number;
+  api_cost_ratio: number | null;
+  api_cost_alert: boolean;
+  max_trades_per_week: number;
+};
+
+// API-050 — audit trail.
+export type History = {
+  orders: AgentOrder[];
+  decisions: AgentDecision[];
+};
+
+// GET /agent/config — server-enforced guardrails (read-only).
+export type GuardrailConfig = {
+  max_trade_usd: number;
+  max_pct_buying_power: number;
+  max_open_positions: number;
+  max_trades_per_week: number;
+  stop_loss_pct: number;
+  take_profit_pct: number;
+  min_hours_between_entries: number;
+  hold_period_days_max: number;
+  max_daily_loss_pct: number;
+  max_decision_cycles_per_hour: number;
+  perception_confidence_min: number;
+  ml_guardrail_minimum: number;
+};
+
+// API-051
+export function getMetrics(): Promise<Metrics> {
+  return apiFetch<Metrics>("/metrics");
+}
+
+// API-050
+export function getHistory(limit = 100): Promise<History> {
+  return apiFetch<History>(`/history?limit=${limit}`);
+}
+
+export function getAgentOrders(status?: OrderStatus): Promise<AgentOrder[]> {
+  const q = status ? `?status=${status}` : "";
+  return apiFetch<AgentOrder[]>(`/agent/orders${q}`);
+}
+
+// Phase-3 approval — places the pending order via the backend (INV-014 opt-in).
+export function approveOrder(
+  id: string,
+): Promise<{ order_id: string | null; executed: boolean; status: string; reason: string }> {
+  return apiFetch(`/agent/orders/${id}/approve`, { method: "POST" });
+}
+
+export function rejectOrder(
+  id: string,
+): Promise<{ order_id: string | null; status: string }> {
+  return apiFetch(`/agent/orders/${id}/reject`, { method: "POST" });
+}
+
+export function getAgentConfig(): Promise<GuardrailConfig> {
+  return apiFetch<GuardrailConfig>("/agent/config");
+}
+
 // Required disclosure (PRD Section 18) — shown before the first Robinhood
 // connect and acknowledged before the connect button is enabled.
 export const ROBINHOOD_DISCLOSURE =
