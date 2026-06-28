@@ -511,6 +511,40 @@ export function getAgentConfig(): Promise<GuardrailConfig> {
   return apiFetch<GuardrailConfig>("/agent/config");
 }
 
+// POST /agent/phase — set the validation phase (PRD Section 8.2). Advancing to
+// Phase 4 (auto-execution) requires acknowledging the disclosure (INV-014).
+export function setAgentPhase(
+  phase: number,
+  disclosureAcknowledged = false,
+): Promise<AgentStatus> {
+  return apiFetch<AgentStatus>("/agent/phase", {
+    method: "POST",
+    body: JSON.stringify({ phase, disclosure_acknowledged: disclosureAcknowledged }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Perception (PRD M6 / FR-016) — latest cached PerceptionSignal per symbol.
+// Anthropic is the primary perception engine (INV-018); this is read-only.
+// ---------------------------------------------------------------------------
+
+export type PerceptionSignal = {
+  symbol: string;
+  timestamp: string | null;
+  retail_sentiment: number;
+  institutional_sentiment: number;
+  media_sentiment: number;
+  composite_score: number;
+  key_thesis: string;
+  persona_consensus: boolean;
+  confidence: number;
+  sources: string[];
+};
+
+export function getPerception(): Promise<PerceptionSignal[]> {
+  return apiFetch<PerceptionSignal[]>("/perception");
+}
+
 // Required disclosure (PRD Section 18) — shown before the first Robinhood
 // connect and acknowledged before the connect button is enabled.
 export const ROBINHOOD_DISCLOSURE =

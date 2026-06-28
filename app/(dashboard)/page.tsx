@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AgentFeed } from "@/components/agent-feed";
 import { AgentToggle } from "@/components/agent-toggle";
 import { OrderApprovals } from "@/components/order-approvals";
+import { PerceptionPanel } from "@/components/perception-panel";
 import { PhaseBadge } from "@/components/phase-badge";
 import { PnlSummary } from "@/components/pnl-summary";
 import { PortfolioSummary } from "@/components/portfolio-summary";
@@ -71,6 +72,7 @@ export default function Home() {
 
       <PnlSummary />
       <PortfolioSummary />
+      <PerceptionPanel />
 
       <AgentFeed />
 

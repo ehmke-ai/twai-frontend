@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { GuardrailsForm } from "@/components/guardrails-form";
+import { PhaseControl } from "@/components/phase-control";
 
 // Settings landing (PRD Section 12): integrations + the server-enforced
 // guardrails view (guardrails-form, M5).
@@ -34,6 +35,7 @@ export default function SettingsPage() {
         ))}
       </div>
 
+      <PhaseControl />
       <GuardrailsForm />
     </div>
   );
