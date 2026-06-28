@@ -354,26 +354,55 @@ export type AgentStatus = {
   last_cycle_at: string | null;
   heartbeat_at: string | null;
   poll_interval_sec: number;
+  stopped_reason?: string | null;
 };
 
-// API-001
-export function startAgent(): Promise<{ active: boolean }> {
-  return apiFetch<{ active: boolean }>("/agent/start", { method: "POST" });
+// One decision-cycle record (PRD agent_decision; agent-feed row).
+export type AgentDecision = {
+  id: number;
+  created_at: string;
+  symbol: string;
+  trigger: string;
+  ml_score: number | null;
+  action: "BUY" | "SELL" | "HOLD" | "PASS";
+  reason: string;
+  llm_model: string | null;
+  phase: number;
+  executed: boolean;
+  blocked_by: string | null;
+  perception: Record<string, unknown>;
+  tokens: Record<string, unknown>;
+};
+
+// API-001 — returns the updated agent status.
+export function startAgent(): Promise<AgentStatus> {
+  return apiFetch<AgentStatus>("/agent/start", { method: "POST" });
 }
 
-// API-002
-export function stopAgent(): Promise<{ active: boolean }> {
-  return apiFetch<{ active: boolean }>("/agent/stop", { method: "POST" });
+// API-002 — returns the updated agent status.
+export function stopAgent(): Promise<AgentStatus> {
+  return apiFetch<AgentStatus>("/agent/stop", { method: "POST" });
 }
 
 // API-003
-export function flattenAgent(): Promise<{ flattening: boolean }> {
-  return apiFetch<{ flattening: boolean }>("/agent/flatten", { method: "POST" });
+export function flattenAgent(): Promise<{
+  flattening: boolean;
+  positions_closed: number;
+}> {
+  return apiFetch<{ flattening: boolean; positions_closed: number }>(
+    "/agent/flatten",
+    { method: "POST" },
+  );
 }
 
 // API-004
 export function getAgentStatus(): Promise<AgentStatus> {
   return apiFetch<AgentStatus>("/agent/status");
+}
+
+// Recent decision-cycle log (agent-feed).
+export function getAgentDecisions(limit = 50): Promise<AgentDecision[]> {
+  return apiFetch<AgentDecision[]>(`/agent/decisions?limit=${limit}`);
 }
 
 // Required disclosure (PRD Section 18) — shown before the first Robinhood

@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+import { AgentFeed } from "@/components/agent-feed";
+import { AgentToggle } from "@/components/agent-toggle";
 import { getHealth, type HealthResponse } from "@/lib/api-client";
 
 type Status = "loading" | "connected" | "error";
@@ -38,35 +41,26 @@ export default function Home() {
         : "bg-zinc-400";
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-full max-w-md rounded-2xl border border-black/[.08] bg-white p-8 shadow-sm dark:border-white/[.145] dark:bg-zinc-950">
-        <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
-          TWAI
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          AI Swing Trading Agent
-        </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">TWAI</h1>
+        <p className="mt-1 text-sm text-zinc-500">AI Swing Trading Agent</p>
+      </div>
 
-        <div className="mt-6 flex items-center gap-3 rounded-lg border border-black/[.06] p-4 dark:border-white/[.1]">
-          <span className={`inline-block h-3 w-3 rounded-full ${dotColor}`} />
-          <div className="text-sm">
-            <div className="font-medium text-black dark:text-zinc-50">
-              Backend{" "}
-              {status === "loading"
-                ? "connecting…"
-                : status === "connected"
-                  ? `connected (${health?.status})`
-                  : "unreachable"}
-            </div>
-            <div className="text-zinc-500 dark:text-zinc-400">
-              {status === "connected"
-                ? `database: ${health?.db}`
-                : status === "error"
-                  ? error
-                  : "calling /health via lib/api-client.ts"}
-            </div>
-          </div>
-        </div>
+      {/* Agent toggle sits above everything (PRD 8.1). */}
+      <AgentToggle />
+
+      <AgentFeed />
+
+      <div className="flex items-center gap-3 rounded-lg border border-black/[.06] p-4 text-sm dark:border-white/[.1]">
+        <span className={`inline-block h-2.5 w-2.5 rounded-full ${dotColor}`} />
+        <span className="text-zinc-500">
+          {status === "loading"
+            ? "connecting to backend…"
+            : status === "connected"
+              ? `backend ${health?.status} · database ${health?.db}`
+              : `backend unreachable: ${error}`}
+        </span>
       </div>
     </div>
   );
