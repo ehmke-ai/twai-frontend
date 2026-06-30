@@ -103,6 +103,35 @@ export function getMentionHistory(
 }
 
 // ---------------------------------------------------------------------------
+// Watchlist — the curated set of tickers discovery scans for (the scan universe).
+// Seeded with the top 100 US companies by market cap; user-managed (add/delete).
+// Removing a ticker also purges its mention history (backend DELETE).
+// ---------------------------------------------------------------------------
+
+// GET /watchlist — current watchlist symbols (sorted).
+export function getWatchlist(): Promise<{ symbols: string[] }> {
+  return apiFetch<{ symbols: string[] }>("/watchlist");
+}
+
+// POST /watchlist — add a symbol; returns the updated list.
+export function addToWatchlist(symbol: string): Promise<{ symbols: string[] }> {
+  return apiFetch<{ symbols: string[] }>("/watchlist", {
+    method: "POST",
+    body: JSON.stringify({ symbol }),
+  });
+}
+
+// DELETE /watchlist/{symbol} — remove a symbol (and purge its history).
+export function removeFromWatchlist(
+  symbol: string,
+): Promise<{ symbols: string[] }> {
+  return apiFetch<{ symbols: string[] }>(
+    `/watchlist/${encodeURIComponent(symbol)}`,
+    { method: "DELETE" },
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Robinhood — connection + read-only account viewing (no trading).
 // OAuth and tokens live entirely backend-side (INV-011/INV-012); the frontend
 // only triggers the redirect flow and reads non-sensitive connection state.

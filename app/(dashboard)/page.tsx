@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { DiscoveryPanel } from "@/components/discovery-panel";
 import { MentionChart } from "@/components/mention-chart";
+import { WatchlistPanel } from "@/components/watchlist-panel";
 import { getHealth, type HealthResponse } from "@/lib/api-client";
 
 type Status = "loading" | "connected" | "error";
@@ -48,6 +49,7 @@ export default function Home() {
         <p className="mt-1 text-sm text-zinc-500">Stock Mention Tracker</p>
       </div>
 
+      <WatchlistPanel />
       <DiscoveryPanel selected={selected} onSelect={setSelected} />
       <MentionChart symbol={selected} />
 
