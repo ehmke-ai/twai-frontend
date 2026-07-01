@@ -6,7 +6,9 @@ import { DiscoveryPanel } from "@/components/discovery-panel";
 import { PostFeed } from "@/components/post-feed";
 import { SymbolPanel } from "@/components/symbol-panel";
 import { WatchlistPanel } from "@/components/watchlist-panel";
+import { Badge } from "@/components/ui/badge";
 import { getHealth, type HealthResponse } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 type Status = "loading" | "connected" | "error";
 
@@ -34,14 +36,14 @@ export default function Home() {
     };
   }, []);
 
-  const dotColor =
+  const dotClass =
     status === "connected"
       ? health?.db === "ok"
         ? "bg-green-500"
         : "bg-yellow-500"
       : status === "error"
-        ? "bg-red-500"
-        : "bg-zinc-400";
+        ? "bg-destructive"
+        : "bg-muted-foreground";
 
   const statusLabel =
     status === "loading"
@@ -52,20 +54,20 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Research</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Social mentions + Claude sentiment per ticker
+          <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+            Perception feed
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Research</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Social mentions and Claude sentiment, ticker by ticker
           </p>
         </div>
-        <span
-          title={status === "error" && error ? error : statusLabel}
-          className="inline-flex items-center gap-2 rounded-full border border-black/[.08] px-3 py-1 text-xs text-zinc-500 dark:border-white/[.145] dark:text-zinc-400"
-        >
-          <span className={`inline-block h-2 w-2 rounded-full ${dotColor}`} />
+        <Badge variant="outline" title={status === "error" && error ? error : statusLabel}>
+          <span className={cn("size-1.5 rounded-full", dotClass)} />
           {statusLabel}
-        </span>
+        </Badge>
       </header>
 
       <SymbolPanel symbol={selected} />

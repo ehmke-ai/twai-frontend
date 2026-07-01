@@ -2,24 +2,24 @@
 
 import { useRouter } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
+import { cn } from "@/lib/utils";
 
 export function SignOutButton({ className }: { className?: string }) {
   const router = useRouter();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      className={cn(className)}
       onClick={async () => {
         await authClient.signOut();
         router.push("/auth/sign-in");
       }}
-      className={
-        className ??
-        "text-sm text-zinc-500 transition-colors hover:text-black dark:hover:text-white"
-      }
     >
       Sign out
-    </button>
+    </Button>
   );
 }

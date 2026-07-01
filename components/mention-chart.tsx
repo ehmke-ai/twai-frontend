@@ -11,11 +11,17 @@ import {
   YAxis,
 } from "recharts";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   getMentionHistory,
   type ChartRange,
   type MentionPoint,
 } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
+
+const CHART_COLOR = "oklch(0.646 0.222 41.116)";
+const AXIS_COLOR = "oklch(0.556 0 0)";
+const GRID_COLOR = "oklch(0.922 0 0)";
 
 const SOURCE_LABEL: Record<string, string> = {
   stocktwits: "StockTwits",
@@ -26,7 +32,6 @@ type Row = MentionPoint & { label: string };
 
 function formatLabel(iso: string, range: ChartRange): string {
   const d = new Date(iso);
-  // Intraday ranges show the time; longer ranges show the date.
   if (range === "1D" || range === "1W") {
     return d.toLocaleString(undefined, {
       month: "short",
@@ -47,13 +52,13 @@ function ChartTooltip({
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0].payload;
   return (
-    <div className="rounded-lg border border-black/[.1] bg-white px-3 py-2 text-xs shadow-sm dark:border-white/[.18] dark:bg-zinc-900">
+    <div className="rounded-lg border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
       <div className="font-medium">{row.label}</div>
-      <div className="mt-1 tabular-nums">
-        Posts <span className="font-semibold">{row.total}</span>
+      <div className="mt-1 tabular-nums text-muted-foreground">
+        Posts <span className="font-semibold text-foreground">{row.total}</span>
       </div>
       {Object.entries(row.by_source).map(([source, count]) => (
-        <div key={source} className="text-zinc-500 tabular-nums">
+        <div key={source} className="tabular-nums text-muted-foreground">
           {SOURCE_LABEL[source] ?? source}: {count}
         </div>
       ))}
@@ -67,8 +72,6 @@ type Props = {
   hero?: boolean;
 };
 
-// Mention volume over time for one ticker: distinct posts per hour/day bucket,
-// derived from the stored corpus. Per-source split in the tooltip.
 export function MentionChart({ symbol, range, hero = false }: Props) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -95,11 +98,22 @@ export function MentionChart({ symbol, range, hero = false }: Props) {
   }, [symbol, range]);
 
   if (error) {
-    return <div className="px-5 py-3 text-sm text-red-600">{error}</div>;
+    return (
+      <div className="px-6 py-4">
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
   }
   if (loaded && rows.length === 0) {
     return (
-      <div className={`px-5 text-center text-sm text-zinc-500 ${hero ? "py-24" : "py-12"}`}>
+      <div
+        className={cn(
+          "px-6 text-center text-sm text-muted-foreground",
+          hero ? "py-24" : "py-12",
+        )}
+      >
         No posts yet for {symbol}. History builds up as scans run.
       </div>
     );
@@ -111,19 +125,14 @@ export function MentionChart({ symbol, range, hero = false }: Props) {
         <AreaChart data={rows} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
           <defs>
             <linearGradient id="mentionFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#16a34a" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#16a34a" stopOpacity={0} />
+              <stop offset="0%" stopColor={CHART_COLOR} stopOpacity={0.35} />
+              <stop offset="100%" stopColor={CHART_COLOR} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="currentColor"
-            className="text-black/[.06] dark:text-white/[.08]"
-            vertical={false}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 11, fill: "#a1a1aa" }}
+            tick={{ fontSize: 11, fill: AXIS_COLOR }}
             tickLine={false}
             axisLine={false}
             minTickGap={24}
@@ -131,7 +140,7 @@ export function MentionChart({ symbol, range, hero = false }: Props) {
           <YAxis
             allowDecimals={false}
             width={32}
-            tick={{ fontSize: 11, fill: "#a1a1aa" }}
+            tick={{ fontSize: 11, fill: AXIS_COLOR }}
             tickLine={false}
             axisLine={false}
           />
@@ -139,7 +148,7 @@ export function MentionChart({ symbol, range, hero = false }: Props) {
           <Area
             type="monotone"
             dataKey="total"
-            stroke="#16a34a"
+            stroke={CHART_COLOR}
             strokeWidth={2}
             fill="url(#mentionFill)"
             dot={false}

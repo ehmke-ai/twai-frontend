@@ -52,7 +52,7 @@ function PaginationLink({
       data-active={isActive}
       className={cn(
         buttonVariants({
-          variant: isActive ? "outline" : "ghost",
+          variant: isActive ? "default" : "ghost",
           size,
         }),
         "cursor-pointer tabular-nums aria-disabled:pointer-events-none aria-disabled:opacity-50",
@@ -105,7 +105,7 @@ function PaginationEllipsis({
     <span
       aria-hidden
       className={cn(
-        "flex h-9 w-9 items-center justify-center text-zinc-400",
+        "flex h-9 w-9 items-center justify-center text-muted-foreground",
         className,
       )}
       {...props}

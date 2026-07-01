@@ -12,22 +12,29 @@ import {
   YAxis,
 } from "recharts";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   getSentiment,
   type ChartRange,
   type SentimentDot,
 } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
+
+const BULL = "oklch(0.646 0.222 41.116)";
+const BEAR = "oklch(0.577 0.245 27.325)";
+const NEUTRAL = "oklch(0.556 0 0)";
+const AXIS_COLOR = "oklch(0.556 0 0)";
+const GRID_COLOR = "oklch(0.922 0 0)";
 
 const SOURCE_LABEL: Record<string, string> = {
   stocktwits: "StockTwits",
   reddit: "Reddit",
 };
 
-// Bearish→bullish color ramp for the dots (red → zinc → green).
 function dotColor(direction: number): string {
-  if (direction <= -0.15) return "#dc2626";
-  if (direction >= 0.15) return "#16a34a";
-  return "#a1a1aa";
+  if (direction <= -0.15) return BEAR;
+  if (direction >= 0.15) return BULL;
+  return NEUTRAL;
 }
 
 function DotTooltip({
@@ -46,26 +53,25 @@ function DotTooltip({
     minute: "2-digit",
   });
   return (
-    <div className="max-w-xs rounded-lg border border-black/[.1] bg-white px-3 py-2 text-xs shadow-sm dark:border-white/[.18] dark:bg-zinc-900">
+    <div className="max-w-xs rounded-lg border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
       <div className="flex items-center gap-2">
         <span
-          className="inline-block h-2 w-2 rounded-full"
+          className="inline-block size-2 rounded-full"
           style={{ backgroundColor: dotColor(dot.direction) }}
         />
         <span className="font-medium capitalize">{dot.label}</span>
-        <span className="text-zinc-400">
+        <span className="text-muted-foreground">
           {SOURCE_LABEL[dot.source] ?? dot.source} · {when}
         </span>
       </div>
-      <div className="mt-1 tabular-nums text-zinc-500">
+      <div className="mt-1 tabular-nums text-muted-foreground">
         direction {dot.direction.toFixed(2)} · severity {dot.severity.toFixed(2)}
       </div>
-      <p className="mt-1 text-zinc-600 dark:text-zinc-300">{dot.snippet}</p>
+      <p className="mt-1.5 text-muted-foreground">{dot.snippet}</p>
     </div>
   );
 }
 
-// A colored dot per labeled post; recharts calls this with the dot's props.
 function SentimentDotShape(props: { cx?: number; cy?: number; payload?: SentimentDot }) {
   const { cx, cy, payload } = props;
   if (cx == null || cy == null || !payload) return <g />;
@@ -75,7 +81,7 @@ function SentimentDotShape(props: { cx?: number; cy?: number; payload?: Sentimen
       cy={cy}
       r={4.5}
       fill={dotColor(payload.direction)}
-      fillOpacity={0.65}
+      fillOpacity={0.72}
       stroke="none"
     />
   );
@@ -87,9 +93,6 @@ type Props = {
   hero?: boolean;
 };
 
-// The ideas.md chart: every labeled post is a dot. Left↔right is bearish↔
-// bullish (direction), up↕down is severity. A glance shows where perception
-// mass sits and how strongly it's held.
 export function SentimentScatter({ symbol, range, hero = false }: Props) {
   const [dots, setDots] = useState<SentimentDot[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -116,11 +119,22 @@ export function SentimentScatter({ symbol, range, hero = false }: Props) {
   }, [symbol, range]);
 
   if (error) {
-    return <div className="px-5 py-3 text-sm text-red-600">{error}</div>;
+    return (
+      <div className="px-6 py-4">
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
   }
   if (loaded && dots.length === 0) {
     return (
-      <div className={`px-5 text-center text-sm text-zinc-500 ${hero ? "py-24" : "py-12"}`}>
+      <div
+        className={cn(
+          "px-6 text-center text-sm text-muted-foreground",
+          hero ? "py-24" : "py-12",
+        )}
+      >
         No labeled posts yet for {symbol}. Sentiment builds up as scans run.
       </div>
     );
@@ -130,17 +144,13 @@ export function SentimentScatter({ symbol, range, hero = false }: Props) {
     <div className="px-2 py-4">
       <ResponsiveContainer width="100%" height={hero ? 340 : 260}>
         <ScatterChart margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="currentColor"
-            className="text-black/[.06] dark:text-white/[.08]"
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
           <XAxis
             type="number"
             dataKey="direction"
             domain={[-1, 1]}
             ticks={[-1, -0.5, 0, 0.5, 1]}
-            tick={{ fontSize: 11, fill: "#a1a1aa" }}
+            tick={{ fontSize: 11, fill: AXIS_COLOR }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(v: number) =>
@@ -153,17 +163,17 @@ export function SentimentScatter({ symbol, range, hero = false }: Props) {
             domain={[0, 1]}
             ticks={[0, 0.25, 0.5, 0.75, 1]}
             width={44}
-            tick={{ fontSize: 11, fill: "#a1a1aa" }}
+            tick={{ fontSize: 11, fill: AXIS_COLOR }}
             tickLine={false}
             axisLine={false}
             label={{
               value: "severity",
               angle: -90,
               position: "insideLeft",
-              style: { fontSize: 11, fill: "#a1a1aa" },
+              style: { fontSize: 11, fill: AXIS_COLOR },
             }}
           />
-          <ReferenceLine x={0} stroke="#a1a1aa" strokeDasharray="4 4" />
+          <ReferenceLine x={0} stroke={AXIS_COLOR} strokeDasharray="4 4" strokeOpacity={0.6} />
           <Tooltip content={<DotTooltip />} cursor={false} />
           <Scatter data={dots} shape={<SentimentDotShape />} isAnimationActive={false} />
         </ScatterChart>

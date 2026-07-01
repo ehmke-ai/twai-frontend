@@ -1,22 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 
 import { NeonAuthProvider } from "@/components/neon-auth-provider";
+import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "TWAI — AI Day Trading Agent",
-  description: "Dashboard for the TWAI trading agent",
+  title: "TWAI — Perception Terminal",
+  description: "Social sentiment research for the TWAI swing trading agent",
 };
 
 export default function RootLayout({
@@ -27,10 +19,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fontVariables} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
-        <NeonAuthProvider>{children}</NeonAuthProvider>
+      <body className="flex min-h-full flex-col">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <NeonAuthProvider>{children}</NeonAuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
