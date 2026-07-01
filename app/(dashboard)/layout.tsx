@@ -7,11 +7,7 @@ import { auth } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
-const NAV = [
-  { href: "/", label: "Dashboard" },
-  { href: "/positions", label: "Positions" },
-  { href: "/settings/integrations", label: "Settings" },
-];
+const NAV = [{ href: "/", label: "Research" }];
 
 const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS ?? "")
   .split(",")

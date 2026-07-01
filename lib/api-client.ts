@@ -1,8 +1,8 @@
 // lib/api-client.ts
 //
-// The SOLE boundary between the frontend and the TWAI backend (FR-001, PRD 12.2).
-// No other module may talk to the backend directly. No secrets live here — only
-// the public NEXT_PUBLIC_API_BASE_URL (INV-012).
+// The SOLE boundary between the frontend and the TWAI backend. No other module
+// may talk to the backend directly. No secrets live here — only the public
+// NEXT_PUBLIC_API_BASE_URL.
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -10,9 +10,9 @@ const API_BASE_URL =
 // ---------------------------------------------------------------------------
 // Auth — bearer token injection.
 // The getter is registered by <AuthTokenBridge> from the Neon Auth session, so
-// this module imports no auth SDK and holds no secrets (INV-012): it only
-// attaches a short-lived access token already present in the browser. The
-// backend re-verifies it and enforces the email allowlist.
+// this module imports no auth SDK and holds no secrets: it only attaches a
+// short-lived access token already present in the browser. The backend
+// re-verifies it and enforces the email allowlist.
 // ---------------------------------------------------------------------------
 type AuthTokenGetter = () => Promise<string | null>;
 let getAuthToken: AuthTokenGetter | null = null;
@@ -20,11 +20,6 @@ let getAuthToken: AuthTokenGetter | null = null;
 export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
   getAuthToken = getter;
 }
-
-export type HealthResponse = {
-  status: "ok" | "degraded";
-  db: "ok" | "down";
-};
 
 export class ApiError extends Error {
   constructor(
@@ -53,17 +48,27 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
-// API-060
+// ---------------------------------------------------------------------------
+// Health
+// ---------------------------------------------------------------------------
+
+export type HealthResponse = {
+  status: "ok" | "degraded";
+  db: "ok" | "down";
+};
+
 export function getHealth(): Promise<HealthResponse> {
   return apiFetch<HealthResponse>("/health");
 }
 
 // ---------------------------------------------------------------------------
-// Discovery — stock-mention tracker. Scan social sources (StockTwits + Reddit)
-// for distinct-post mention counts per ticker, charted over time.
+// Discovery — everything is derived from the stored post corpus: the trending
+// ranking (trailing window), per-ticker mention series, sentiment dots, and
+// the post feed. Scans run on a schedule in the backend; "Scan now" just
+// triggers one early.
 // ---------------------------------------------------------------------------
 
-// One row of the ranking table: total mentions this scan + per-source split.
+// One row of the trending table.
 export type MentionTicker = {
   symbol: string;
   name: string;
@@ -72,41 +77,103 @@ export type MentionTicker = {
   rank: number;
 };
 
-// One point on the per-ticker chart.
+// The most recent scan's outcome (per-source stats + status).
+export type ScanInfo = {
+  started_at: string;
+  finished_at: string;
+  trigger: "manual" | "scheduled";
+  status: "ok" | "partial" | "failed";
+  sources: Record<string, Record<string, unknown>>;
+};
+
+export type DiscoveryState = {
+  tickers: MentionTicker[];
+  window_hours: number;
+  last_scan: ScanInfo | null;
+};
+
+// One point on the per-ticker mention chart (bucketed by hour/day).
 export type MentionPoint = {
-  observed_at: string; // ISO timestamp
+  observed_at: string; // ISO timestamp (bucket start)
   total: number;
   by_source: Record<string, number>;
 };
 
-export type MentionRange = "1D" | "1W" | "1M" | "3M" | "all";
+// One labeled post as a dot: x = direction (bearish→bullish), y = severity.
+export type SentimentDot = {
+  post_id: number;
+  observed_at: string;
+  direction: number; // -1..1
+  severity: number; // 0..1
+  label: "bearish" | "neutral" | "bullish";
+  source: string;
+  url: string | null;
+  snippet: string;
+};
 
-// GET /discovery — latest scan's ranking.
-export function getDiscovery(): Promise<{ tickers: MentionTicker[] }> {
-  return apiFetch<{ tickers: MentionTicker[] }>("/discovery");
+export type PostSentiment = {
+  direction: number;
+  severity: number;
+  label: "bearish" | "neutral" | "bullish";
+};
+
+// One post in the per-symbol feed.
+export type FeedPost = {
+  post_id: number;
+  source: string;
+  text: string;
+  created_at: string;
+  author: string | null;
+  url: string | null;
+  score: number | null;
+  sentiment: PostSentiment | null;
+};
+
+export type ChartRange = "1D" | "1W" | "1M" | "3M" | "all";
+
+// GET /discovery — trending ranking + last scan outcome.
+export function getDiscovery(): Promise<DiscoveryState> {
+  return apiFetch<DiscoveryState>("/discovery");
 }
 
-// POST /discovery/scan — run a fresh scan now, return the new ranking.
-export function scanDiscovery(): Promise<{ tickers: MentionTicker[] }> {
-  return apiFetch<{ tickers: MentionTicker[] }>("/discovery/scan", {
-    method: "POST",
-  });
+// POST /discovery/scan — run a scan now (collect + label), return new state.
+export function scanDiscovery(): Promise<DiscoveryState> {
+  return apiFetch<DiscoveryState>("/discovery/scan", { method: "POST" });
 }
 
 // GET /discovery/{symbol}/history — mention time-series for one ticker.
 export function getMentionHistory(
   symbol: string,
-  range: MentionRange = "1M",
-): Promise<{ symbol: string; range: string; points: MentionPoint[] }> {
+  range: ChartRange = "1M",
+): Promise<{ symbol: string; range: string; bucket: string; points: MentionPoint[] }> {
   return apiFetch(
     `/discovery/${encodeURIComponent(symbol)}/history?range=${range}`,
   );
 }
 
+// GET /discovery/{symbol}/sentiment — labeled posts as dots.
+export function getSentiment(
+  symbol: string,
+  range: ChartRange = "1M",
+): Promise<{ symbol: string; range: string; points: SentimentDot[] }> {
+  return apiFetch(
+    `/discovery/${encodeURIComponent(symbol)}/sentiment?range=${range}`,
+  );
+}
+
+// GET /discovery/{symbol}/posts — recent posts (with sentiment) for the feed.
+export function getPosts(
+  symbol: string,
+  limit = 50,
+): Promise<{ symbol: string; posts: FeedPost[] }> {
+  return apiFetch(
+    `/discovery/${encodeURIComponent(symbol)}/posts?limit=${limit}`,
+  );
+}
+
 // ---------------------------------------------------------------------------
-// Watchlist — the curated set of tickers discovery scans for (the scan universe).
-// Seeded with the top 100 US companies by market cap; user-managed (add/delete).
-// Removing a ticker also purges its mention history (backend DELETE).
+// Watchlist — the curated set of tickers scans cover. Removing a ticker is a
+// SOFT delete: scanning stops but collected history is kept.
 // ---------------------------------------------------------------------------
 
 export type WatchlistEntry = { symbol: string; name: string };
@@ -116,12 +183,10 @@ export type WatchlistResponse = {
   entries: WatchlistEntry[];
 };
 
-// GET /watchlist — current watchlist symbols (sorted).
 export function getWatchlist(): Promise<WatchlistResponse> {
   return apiFetch<WatchlistResponse>("/watchlist");
 }
 
-// POST /watchlist — add a symbol; returns the updated list.
 export function addToWatchlist(symbol: string): Promise<WatchlistResponse> {
   return apiFetch<WatchlistResponse>("/watchlist", {
     method: "POST",
@@ -129,7 +194,6 @@ export function addToWatchlist(symbol: string): Promise<WatchlistResponse> {
   });
 }
 
-// DELETE /watchlist/{symbol} — remove a symbol (and purge its history).
 export function removeFromWatchlist(
   symbol: string,
 ): Promise<WatchlistResponse> {
@@ -138,54 +202,3 @@ export function removeFromWatchlist(
     { method: "DELETE" },
   );
 }
-
-// ---------------------------------------------------------------------------
-// Robinhood — connection + read-only account viewing (no trading).
-// OAuth and tokens live entirely backend-side (INV-011/INV-012); the frontend
-// only triggers the redirect flow and reads non-sensitive connection state.
-// ---------------------------------------------------------------------------
-
-export type RobinhoodStatus = {
-  connected: boolean;
-  configured: boolean;
-  account_id: string | null;
-  account_number: string | null;
-  account_type: string | null;
-  scope: string | null;
-  expires_at: string | null;
-  connected_at: string | null;
-};
-
-// Agentic account snapshot via MCP read tools. Shapes are broker-defined, so
-// kept loose and rendered defensively.
-export type Portfolio = {
-  account: Record<string, unknown> | null;
-  portfolio: Record<string, unknown> | null;
-  positions: Array<Record<string, unknown>> | null;
-};
-
-// Full-page navigation target for the OAuth redirect: /robinhood/connect
-// 302-redirects to Robinhood, so the browser must navigate (not a fetch).
-export function robinhoodConnectUrl(): string {
-  return `${API_BASE_URL}/robinhood/connect`;
-}
-
-export function getRobinhoodStatus(): Promise<RobinhoodStatus> {
-  return apiFetch<RobinhoodStatus>("/robinhood/status");
-}
-
-export function disconnectRobinhood(): Promise<{ disconnected: boolean }> {
-  return apiFetch<{ disconnected: boolean }>("/robinhood/disconnect", {
-    method: "POST",
-  });
-}
-
-export function getPortfolio(): Promise<Portfolio> {
-  return apiFetch<Portfolio>("/portfolio");
-}
-
-// Disclosure shown before the first Robinhood connect.
-export const ROBINHOOD_DISCLOSURE =
-  "This app connects to your Robinhood account for read-only viewing of your " +
-  "balances and positions. It does not place trades. You can disconnect at any " +
-  "time.";

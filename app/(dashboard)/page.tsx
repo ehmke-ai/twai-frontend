@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { DiscoveryPanel } from "@/components/discovery-panel";
-import { MentionChart } from "@/components/mention-chart";
+import { PostFeed } from "@/components/post-feed";
+import { SymbolPanel } from "@/components/symbol-panel";
 import { WatchlistPanel } from "@/components/watchlist-panel";
 import { getHealth, type HealthResponse } from "@/lib/api-client";
 
@@ -53,8 +54,10 @@ export default function Home() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="mt-1 text-sm text-zinc-500">Stock mention tracker</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Research</h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Social mentions + Claude sentiment per ticker
+          </p>
         </div>
         <span
           title={status === "error" && error ? error : statusLabel}
@@ -65,7 +68,8 @@ export default function Home() {
         </span>
       </header>
 
-      <MentionChart symbol={selected} hero />
+      <SymbolPanel symbol={selected} />
+      <PostFeed symbol={selected} />
       <DiscoveryPanel selected={selected} onSelect={setSelected} />
       <WatchlistPanel collapsible defaultOpen={false} />
     </div>
