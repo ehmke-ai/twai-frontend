@@ -1,34 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# twai-frontend
 
-## Getting Started
+Next.js dashboard for the **TWAI researcher** — social mentions + Claude
+sentiment per ticker. Thin client: it talks only to the twai-backend API
+(`lib/api-client.ts`); no broker or AI secrets ever live here.
 
-First, run the development server:
+## Pages / panels (single research view)
+
+- **Symbol panel** — hero chart for the selected ticker with two tabs:
+  - *Mentions*: post volume over time (hour/day buckets)
+  - *Sentiment*: one dot per labeled post — x = bearish↔bullish direction,
+    y = severity — with post snippet on hover
+- **Post feed** — recent posts for the ticker with per-post sentiment chips
+- **Trending** — tickers ranked by distinct posts in the trailing window,
+  with last-scan status (scans run automatically in the backend)
+- **Watchlist** — the scan universe; removal is a soft delete (history kept)
+
+Auth is Neon Auth (Google sign-in) with a server-side email allowlist; the
+bearer token is bridged into `api-client` by `components/auth-token-bridge.tsx`.
+
+## Getting started
 
 ```bash
 npm install
-npm run dev
+npm run dev     # http://localhost:3000
 ```
+
+`.env.local` needs `NEXT_PUBLIC_API_BASE_URL` (backend URL) plus the Neon Auth
+variables — see `.env.local.example`.
 
 This project uses **npm** (`package-lock.json`). Install new dependencies with
 `npm install <pkg>` so the lockfile Vercel deploys with stays in sync.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vercel. The backend (FastAPI + scan loop) deploys separately on Railway.

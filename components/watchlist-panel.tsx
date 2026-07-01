@@ -26,9 +26,9 @@ function NameCell({ name }: { name: string }) {
   );
 }
 
-// The discovery universe: tickers the scan counts mentions for. Seeded with the
-// top 100 by market cap; add/delete to curate. Deleting a ticker also purges its
-// mention history on the backend.
+// The research universe: tickers scans collect posts for. Seeded with the
+// top 100 by market cap; add/remove to curate. Removal is a soft delete —
+// scanning stops but collected posts/sentiment are kept.
 export function WatchlistPanel({
   onChange,
   collapsible = false,
@@ -152,8 +152,8 @@ export function WatchlistPanel({
             })()}
             {open && (
               <p className="mt-0.5 text-xs text-zinc-400">
-                Discovery only scans these tickers. Removing one deletes its mention
-                history.
+                Scans only cover these tickers. Removing one stops scanning it —
+                collected history is kept.
               </p>
             )}
           </div>
@@ -198,8 +198,7 @@ export function WatchlistPanel({
       {open &&
         (loaded && entries.length === 0 && !error ? (
         <div className="px-5 py-8 text-center text-sm text-zinc-500">
-          Your watchlist is empty. Add a ticker above to include it in discovery
-          scans.
+          Your watchlist is empty. Add a ticker above to include it in scans.
         </div>
       ) : filtered.length === 0 ? (
         <div className="px-5 py-8 text-center text-sm text-zinc-500">
@@ -233,7 +232,7 @@ export function WatchlistPanel({
                       onClick={() => onRemove(entry.symbol)}
                       disabled={busy}
                       aria-label={`Remove ${entry.symbol}`}
-                      title={`Remove ${entry.symbol} (deletes its mention history)`}
+                      title={`Remove ${entry.symbol} (stops scanning; history is kept)`}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-zinc-400 opacity-40 transition-all hover:bg-red-50 hover:text-red-600 hover:opacity-100 group-hover:opacity-100 disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                     >
                       <svg

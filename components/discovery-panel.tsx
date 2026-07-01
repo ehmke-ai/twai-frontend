@@ -15,6 +15,7 @@ import {
   getDiscovery,
   scanDiscovery,
   type MentionTicker,
+  type ScanInfo,
 } from "@/lib/api-client";
 
 // Rows per page in the trending table.
@@ -60,11 +61,25 @@ type Props = {
   onSelect: (symbol: string) => void;
 };
 
-// Mention tracker: scan StockTwits + Reddit for how many distinct posts mention
-// each ticker. "Scan now" appends a fresh snapshot; click a row to chart that
-// ticker's mention history over time.
+function scanSummary(scan: ScanInfo | null): string {
+  if (!scan) return "No scan yet";
+  const when = new Date(scan.started_at).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const status = scan.status === "ok" ? "" : ` · ${scan.status.toUpperCase()}`;
+  return `Last scan ${when} (${scan.trigger})${status}`;
+}
+
+// Trending table: tickers ranked by distinct posts in the trailing window,
+// derived from the stored corpus. Scans run automatically in the backend;
+// "Scan now" just triggers one early. Click a row to chart that ticker.
 export function DiscoveryPanel({ selected, onSelect }: Props) {
   const [tickers, setTickers] = useState<MentionTicker[]>([]);
+  const [lastScan, setLastScan] = useState<ScanInfo | null>(null);
+  const [windowHours, setWindowHours] = useState<number>(24);
   const [scanning, setScanning] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,12 +95,15 @@ export function DiscoveryPanel({ selected, onSelect }: Props) {
     [tickers, page],
   );
 
-  // Load the latest ranking on mount (no scan — that's the button).
+  // Load the current derived state on mount (no scan — the backend schedules those).
   useEffect(() => {
     let active = true;
     getDiscovery()
       .then((r) => {
-        if (active) setTickers(r.tickers);
+        if (!active) return;
+        setTickers(r.tickers);
+        setLastScan(r.last_scan);
+        setWindowHours(r.window_hours);
       })
       .catch((e: unknown) => {
         if (active) setError(e instanceof Error ? e.message : String(e));
@@ -104,6 +122,8 @@ export function DiscoveryPanel({ selected, onSelect }: Props) {
     try {
       const r = await scanDiscovery();
       setTickers(r.tickers);
+      setLastScan(r.last_scan);
+      setWindowHours(r.window_hours);
       setPage(1);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -120,8 +140,8 @@ export function DiscoveryPanel({ selected, onSelect }: Props) {
             Trending tickers
           </h2>
           <p className="mt-0.5 text-xs text-zinc-400">
-            Distinct posts mentioning each ticker, from StockTwits + Reddit.
-            Click a row to chart its history.
+            Distinct posts in the last {windowHours}h, from StockTwits + Reddit.
+            Click a row to chart it. {loaded && scanSummary(lastScan)}
           </p>
         </div>
         <button
