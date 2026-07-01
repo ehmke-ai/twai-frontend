@@ -66,6 +66,7 @@ export function getHealth(): Promise<HealthResponse> {
 // One row of the ranking table: total mentions this scan + per-source split.
 export type MentionTicker = {
   symbol: string;
+  name: string;
   total: number;
   by_source: Record<string, number>;
   rank: number;
@@ -108,14 +109,21 @@ export function getMentionHistory(
 // Removing a ticker also purges its mention history (backend DELETE).
 // ---------------------------------------------------------------------------
 
+export type WatchlistEntry = { symbol: string; name: string };
+
+export type WatchlistResponse = {
+  symbols: string[];
+  entries: WatchlistEntry[];
+};
+
 // GET /watchlist — current watchlist symbols (sorted).
-export function getWatchlist(): Promise<{ symbols: string[] }> {
-  return apiFetch<{ symbols: string[] }>("/watchlist");
+export function getWatchlist(): Promise<WatchlistResponse> {
+  return apiFetch<WatchlistResponse>("/watchlist");
 }
 
 // POST /watchlist — add a symbol; returns the updated list.
-export function addToWatchlist(symbol: string): Promise<{ symbols: string[] }> {
-  return apiFetch<{ symbols: string[] }>("/watchlist", {
+export function addToWatchlist(symbol: string): Promise<WatchlistResponse> {
+  return apiFetch<WatchlistResponse>("/watchlist", {
     method: "POST",
     body: JSON.stringify({ symbol }),
   });
@@ -124,8 +132,8 @@ export function addToWatchlist(symbol: string): Promise<{ symbols: string[] }> {
 // DELETE /watchlist/{symbol} — remove a symbol (and purge its history).
 export function removeFromWatchlist(
   symbol: string,
-): Promise<{ symbols: string[] }> {
-  return apiFetch<{ symbols: string[] }>(
+): Promise<WatchlistResponse> {
+  return apiFetch<WatchlistResponse>(
     `/watchlist/${encodeURIComponent(symbol)}`,
     { method: "DELETE" },
   );

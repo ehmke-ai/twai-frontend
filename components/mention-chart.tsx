@@ -72,7 +72,14 @@ function ChartTooltip({
 
 // Robinhood-style mention chart for the selected ticker: a single total-mentions
 // line over time, with range toggles and a per-source breakdown in the tooltip.
-export function MentionChart({ symbol }: { symbol: string | null }) {
+// `hero` renders it taller and more prominent for use as the page's lead element.
+export function MentionChart({
+  symbol,
+  hero = false,
+}: {
+  symbol: string | null;
+  hero?: boolean;
+}) {
   const [range, setRange] = useState<MentionRange>("1M");
   const [rows, setRows] = useState<Row[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -124,8 +131,10 @@ export function MentionChart({ symbol }: { symbol: string | null }) {
       </div>
 
       {!symbol ? (
-        <div className="px-5 py-12 text-center text-sm text-zinc-500">
-          Select a ticker above to see its mention history.
+        <div
+          className={`px-5 text-center text-sm text-zinc-500 ${hero ? "py-24" : "py-12"}`}
+        >
+          Select a ticker below to chart its mention history.
         </div>
       ) : error ? (
         <div className="px-5 py-3 text-sm text-red-600">{error}</div>
@@ -136,7 +145,7 @@ export function MentionChart({ symbol }: { symbol: string | null }) {
         </div>
       ) : (
         <div className="px-2 py-4">
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={hero ? 340 : 260}>
             <AreaChart data={rows} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
               <defs>
                 <linearGradient id="mentionFill" x1="0" y1="0" x2="0" y2="1">
