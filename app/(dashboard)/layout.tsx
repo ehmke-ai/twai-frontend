@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { isJwt } from "@/lib/auth/api-token";
 import { auth } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,8 @@ export default async function DashboardLayout({
   if (!session?.user) redirect("/auth/sign-in");
 
   const email = session.user.email ?? "";
+  const { data: tokenData } = await auth.token();
+  const accessToken = isJwt(tokenData?.token) ? tokenData.token : null;
 
   if (!ALLOWED_EMAILS.includes(email.toLowerCase())) {
     return (
@@ -50,7 +53,7 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <AuthTokenBridge />
+      <AuthTokenBridge accessToken={accessToken} />
       <DashboardShell email={email}>{children}</DashboardShell>
     </>
   );

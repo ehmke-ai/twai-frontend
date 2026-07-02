@@ -47,7 +47,7 @@ export function SymbolPanel({ symbol }: { symbol: string | null }) {
             type="single"
             value={range}
             onValueChange={(v) => v && setRange(v as ChartRange)}
-            variant="outline"
+            variant="default"
             size="sm"
           >
             {RANGES.map((r) => (

@@ -165,7 +165,7 @@ export function WatchlistPanel({
             maxLength={8}
             className="w-24 font-mono uppercase"
           />
-          <Button type="submit" disabled={busy || !input.trim()}>
+          <Button type="submit" variant="ghost" disabled={busy || !input.trim()}>
             Add
           </Button>
         </form>

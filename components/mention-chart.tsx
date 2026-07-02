@@ -24,6 +24,7 @@ const AXIS_COLOR = "oklch(0.556 0 0)";
 const GRID_COLOR = "oklch(0.922 0 0)";
 
 const SOURCE_LABEL: Record<string, string> = {
+  x: "X",
   stocktwits: "StockTwits",
   reddit: "Reddit",
 };

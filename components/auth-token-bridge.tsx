@@ -1,27 +1,26 @@
 "use client";
 
+import { useLayoutEffect } from "react";
+
+import { fetchNeonAuthJwt, isJwt } from "@/lib/auth/api-token";
 import { setAuthTokenGetter } from "@/lib/api-client";
 
-// Mint the bearer JWT the api-client attaches to every backend call.
-//
-// `authClient.token()` was returning null intermittently — when it did, the
-// request went out with no Authorization header and the backend answered 401
-// "Missing bearer token". The Neon Auth handler's `/token` endpoint instead
-// deterministically exchanges the httpOnly session cookie for a fresh JWT, so we
-// call it directly. No secrets touch this module (INV-012): it only reads a
-// browser-scoped session cookie and forwards the short-lived token the backend
-// re-verifies.
-setAuthTokenGetter(async () => {
-  try {
-    const res = await fetch("/api/auth/token", { credentials: "include" });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { token?: string | null };
-    return data?.token ?? null;
-  } catch {
-    return null;
-  }
-});
+type Props = {
+  /** JWT minted server-side via auth.token() — used until the client refresh succeeds. */
+  accessToken: string | null;
+};
 
-export function AuthTokenBridge() {
+export function AuthTokenBridge({ accessToken }: Props) {
+  useLayoutEffect(() => {
+    const fallback = isJwt(accessToken) ? accessToken : null;
+
+    setAuthTokenGetter(async () => {
+      const fresh = await fetchNeonAuthJwt();
+      return fresh ?? fallback;
+    });
+
+    return () => setAuthTokenGetter(null);
+  }, [accessToken]);
+
   return null;
 }

@@ -129,11 +129,11 @@ export function DiscoveryPanel({ selected, onSelect }: Props) {
       <CardHeader className="border-b">
         <CardTitle>Trending tickers</CardTitle>
         <CardDescription>
-          Distinct posts in the last {windowHours}h from StockTwits + Reddit. Click a row
+          Distinct posts in the last {windowHours}h from X. Click a row
           to chart it. {loaded && scanSummary(lastScan)}
         </CardDescription>
         <CardAction>
-          <Button onClick={onScan} disabled={scanning}>
+          <Button variant="ghost" onClick={onScan} disabled={scanning}>
             {scanning ? "Scanning…" : "Scan now"}
           </Button>
         </CardAction>

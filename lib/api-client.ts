@@ -4,8 +4,20 @@
 // may talk to the backend directly. No secrets live here — only the public
 // NEXT_PUBLIC_API_BASE_URL.
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+function resolveApiBaseUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+  if (typeof window === "undefined") return fromEnv;
+
+  const { hostname } = window.location;
+  const isLocal =
+    hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  if (isLocal && !fromEnv.includes("localhost") && !fromEnv.includes("127.0.0.1")) {
+    return "http://localhost:8000";
+  }
+  return fromEnv;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 // ---------------------------------------------------------------------------
 // Auth — bearer token injection.
@@ -33,17 +45,38 @@ export class ApiError extends Error {
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAuthToken ? await getAuthToken() : null;
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init?.headers ?? {}),
+      },
+      cache: "no-store",
+    });
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message === "Failed to fetch"
+        ? `Cannot reach the backend at ${API_BASE_URL}. Is the API server running?`
+        : err instanceof Error
+          ? err.message
+          : String(err);
+    throw new Error(message);
+  }
   if (!res.ok) {
-    throw new ApiError(res.status, `API ${path} failed: ${res.status} ${res.statusText}`);
+    let detail = res.statusText;
+    try {
+      const body = (await res.json()) as { detail?: string };
+      if (body.detail) detail = body.detail;
+    } catch {
+      // ignore non-JSON error bodies
+    }
+    throw new ApiError(
+      res.status,
+      `API ${path} failed: ${res.status} ${detail}`,
+    );
   }
   return (await res.json()) as T;
 }

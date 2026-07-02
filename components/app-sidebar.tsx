@@ -11,12 +11,10 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 
 const NAV = [{ href: "/", label: "Research", icon: LineChart }];
@@ -25,30 +23,17 @@ export function AppSidebar({ email }: { email: string }) {
   const pathname = usePathname();
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <span className="font-mono text-xs font-bold">TW</span>
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">TWAI</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    Perception Terminal
-                  </span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar collapsible="offcanvas">
+      <SidebarHeader className="border-b border-sidebar-border">
+        <div className="flex h-[35px] items-center px-3">
+          <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground">
+            Trading With AI
+          </span>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV.map((item) => (
@@ -56,7 +41,6 @@ export function AppSidebar({ email }: { email: string }) {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
-                    tooltip={item.label}
                   >
                     <Link href={item.href}>
                       <item.icon />
@@ -71,17 +55,15 @@ export function AppSidebar({ email }: { email: string }) {
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="px-2 py-1 group-data-[collapsible=icon]:hidden">
-          <p className="truncate font-mono text-xs text-muted-foreground">{email}</p>
+        <div className="border-b border-sidebar-border px-2 py-1.5">
+          <p className="truncate text-[11px] text-sidebar-muted">{email}</p>
         </div>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SignOutButton className="w-full justify-start" />
+            <SignOutButton className="h-[26px] w-full justify-start rounded-none px-2 text-[13px] font-normal hover:bg-sidebar-accent" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-
-      <SidebarRail />
     </Sidebar>
   );
 }

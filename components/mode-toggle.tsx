@@ -21,7 +21,7 @@ export function ModeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" aria-label="Toggle theme">
+      <Button variant="ghost" size="icon-sm" aria-label="Toggle theme">
         <Sun className="size-4" />
       </Button>
     );
@@ -34,7 +34,7 @@ export function ModeToggle() {
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
           onClick={() => setTheme(isDark ? "light" : "dark")}
         >
